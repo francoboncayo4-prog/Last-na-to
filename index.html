@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 Monitoring Dashboard</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .buttons {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .buttons button {
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background-color: #1976d2;
+      color: white;
+      transition: 0.2s;
+    }
+    .buttons button:hover { background-color: #1565c0; }
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+      width: 180px;
+      text-align: center;
+      font-size: 18px;
+    }
+    canvas {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+      max-width: 90%;
+      margin: 0 auto 30px auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>ESP32 Environmental Dashboard</h1>
+
+  <div class="buttons">
+    <button onclick="showSection('live')">Live</button>
+    <button onclick="showSection('hourly')">Hourly Summary</button>
+    <button onclick="showSection('daily')">Daily Summary</button>
+  </div>
+
+  <div id="live-section">
+    <div class="cards">
+      <div class="card">🌡 Temp: <span id="temp">--</span> °C</div>
+      <div class="card">💧 Humidity: <span id="hum">--</span> %</div>
+      <div class="card">💡 Light: <span id="lux">--</span> lux</div>
+      <div class="card">☀ UV: <span id="uv">--</span> V</div>
+    </div>
+    <canvas id="liveChart"></canvas>
+  </div>
+
+  <div id="hourly-section" style="display:none;">
+    <canvas id="hourlyChart"></canvas>
+  </div>
+
+  <div id="daily-section" style="display:none;">
+    <canvas id="dailyChart"></canvas>
+  </div>
+
+<script>
+  // ===== FIREBASE CONFIG =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyC09rcYujM42cSkheYQSfzw5UCYy2LzeEY",
+    databaseURL: "https://virtual-esp32-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // ===== SECTION SWITCH =====
+  function showSection(section) {
+    document.getElementById('live-section').style.display = 'none';
+    document.getElementById('hourly-section').style.display = 'none';
+    document.getElementById('daily-section').style.display = 'none';
+    document.getElementById(section + '-section').style.display = 'block';
+  }
+
+  // ===== LIVE DATA CHART =====
+  const liveLabels = [];
+  const tempData = [], humData = [], luxData = [], uvData = [];
+  const liveCtx = document.getElementById('liveChart').getContext('2d');
+  const liveChart = new Chart(liveCtx, {
+    type: 'line',
+    data: {
+      labels: liveLabels,
+      datasets: [
+        { label: 'Temp (°C)', data: tempData, borderColor: '#ff5722', fill: false },
+        { label: 'Humidity (%)', data: humData, borderColor: '#2196f3', fill: false },
+        { label: 'Light (lux)', data: luxData, borderColor: '#ffeb3b', fill: false },
+        { label: 'UV (V)', data: uvData, borderColor: '#4caf50', fill: false }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      animation: false,
+      scales: { x: { title: { display: true, text: 'Time' } } }
+    }
+  });
+
+  db.ref("/sensor").on("value", snapshot => {
+    const data = snapshot.val();
+    if(data){
+      const now = new Date().toLocaleTimeString();
+      document.getElementById("temp").innerText = data.temperature.toFixed(1);
+      document.getElementById("hum").innerText  = data.humidity.toFixed(1);
+      document.getElementById("lux").innerText  = data.light.toFixed(1);
+      document.getElementById("uv").innerText   = data.uv.toFixed(2);
+
+      if(liveLabels.length > 20){ // keep last 20 points
+        liveLabels.shift(); tempData.shift(); humData.shift(); luxData.shift(); uvData.shift();
+      }
+      liveLabels.push(now);
+      tempData.push(data.temperature);
+      humData.push(data.humidity);
+      luxData.push(data.light);
+      uvData.push(data.uv);
+      liveChart.update();
+    }
+  });
+
+  // ===== HOURLY SUMMARY CHART =====
+  const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+  const hourlyChart = new Chart(hourlyCtx, {
+    type: 'bar',
+    data: { labels: [], datasets: [
+      { label: 'Avg Temp (°C)', data: [], backgroundColor: '#ff5722' },
+      { label: 'Avg Humidity (%)', data: [], backgroundColor: '#2196f3' },
+      { label: 'Avg Light (lux)', data: [], backgroundColor: '#ffeb3b' },
+      { label: 'Avg UV (V)', data: [], backgroundColor: '#4caf50' }
+    ]},
+    options: { responsive:true, plugins:{legend:{position:'top'}} }
+  });
+
+  db.ref("/sensor_history").on("value", snapshot=>{
+    const data = snapshot.val();
+    if(!data) return;
+    const labels = [], temp=[], hum=[], lux=[], uv=[];
+    Object.keys(data).forEach(hour=>{
+      labels.push(hour);
+      temp.push(data[hour].avg_temperature);
+      hum.push(data[hour].avg_humidity);
+      lux.push(data[hour].avg_light);
+      uv.push(data[hour].avg_uv);
+    });
+    hourlyChart.data.labels = labels;
+    hourlyChart.data.datasets[0].data = temp;
+    hourlyChart.data.datasets[1].data = hum;
+    hourlyChart.data.datasets[2].data = lux;
+    hourlyChart.data.datasets[3].data = uv;
+    hourlyChart.update();
+  });
+
+  // ===== DAILY SUMMARY CHART =====
+  const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+  const dailyChart = new Chart(dailyCtx, {
+    type: 'bar',
+    data: { labels: [], datasets: [
+      { label: 'Avg Temp (°C)', data: [], backgroundColor: '#ff5722' },
+      { label: 'Avg Humidity (%)', data: [], backgroundColor: '#2196f3' },
+      { label: 'Avg Light (lux)', data: [], backgroundColor: '#ffeb3b' },
+      { label: 'Avg UV (V)', data: [], backgroundColor: '#4caf50' }
+    ]},
+    options: { responsive:true, plugins:{legend:{position:'top'}} }
+  });
+
+  db.ref("/daily_summary").on("value", snapshot=>{
+    const data = snapshot.val();
+    if(!data) return;
+    const labels = [], temp=[], hum=[], lux=[], uv=[];
+    Object.keys(data).forEach(day=>{
+      labels.push(day);
+      temp.push(data[day].avg_temperature);
+      hum.push(data[day].avg_humidity);
+      lux.push(data[day].avg_light);
+      uv.push(data[day].avg_uv);
+    });
+    dailyChart.data.labels = labels;
+    dailyChart.data.datasets[0].data = temp;
+    dailyChart.data.datasets[1].data = hum;
+    dailyChart.data.datasets[2].data = lux;
+    dailyChart.data.datasets[3].data = uv;
+    dailyChart.update();
+  });
+
+</script>
+</body>
+</html>
