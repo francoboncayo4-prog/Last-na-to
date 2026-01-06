@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ESP32 Monitoring Dashboard</title>
+  <title>Boncayo and Araño Monitor System</title>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -12,140 +12,141 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* ===== GLOBAL ===== */
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Arial, sans-serif;
-    }
-
+    /* ===== TWILIGHT GLOW THEME ===== */
     body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+      color: #f0f0f0;
       margin: 0;
       padding: 20px;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      color: #f1f5f9;
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 10px;
-      font-weight: 600;
+      margin-bottom: 5px;
+      color: #f0f0f0;
+      text-shadow: 0 0 8px #ff9800, 0 0 12px #ff9800;
+      font-size: 2.2em;
     }
 
-    /* ===== BUTTONS ===== */
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #f0f0f0;
+      text-shadow: 0 0 6px #00ffff, 0 0 10px #00ffff;
+      font-weight: normal;
+      font-size: 1.2em;
+    }
+
     .buttons {
       text-align: center;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
     }
 
     .buttons button {
       padding: 10px 20px;
-      margin: 5px;
-      font-size: 15px;
-      border-radius: 12px;
+      margin: 0 10px;
+      font-size: 16px;
+      border-radius: 8px;
       border: none;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.15);
-      color: #f8fafc;
-      backdrop-filter: blur(8px);
-      transition: 0.3s ease;
+      background-color: #ff9800;
+      color: #fff;
+      box-shadow: 0 0 8px #ff9800, 0 0 12px #ff9800;
+      transition: 0.2s;
     }
 
-    .buttons button:hover {
-      background: rgba(255, 255, 255, 0.3);
+    .buttons button:hover { 
+      background-color: #e68900; 
+      box-shadow: 0 0 12px #ff9800, 0 0 16px #ff9800;
     }
 
-    /* ===== CARDS ===== */
     .cards {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 15px;
-      margin-bottom: 25px;
+      margin-bottom: 30px;
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.05);
       padding: 20px;
-      border-radius: 16px;
-      width: 190px;
+      border-radius: 12px;
+      width: 180px;
       text-align: center;
-      font-size: 16px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      font-size: 18px;
+      box-shadow: 0 0 8px #00ffff, 0 0 12px #00ffff;
+      color: #e0f7fa;
+      transition: 0.2s;
     }
 
-    .card span {
-      display: block;
-      font-size: 1.6rem;
-      font-weight: 600;
-      margin-top: 6px;
+    .card:hover {
+      box-shadow: 0 0 12px #00ffff, 0 0 20px #00ffff;
     }
 
-    /* ===== CANVAS ===== */
     canvas {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 15px;
-      max-width: 95%;
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 90%;
       margin: 0 auto 30px auto;
       display: block;
-    }
-
-    footer {
-      text-align: center;
-      color: #94a3b8;
-      font-size: 0.85rem;
+      box-shadow: 0 0 10px #00ffff, 0 0 15px #00ffff;
     }
   </style>
 </head>
-
 <body>
+  <h1>Boncayo and Araño Monitor System</h1>
+  <h2>ESP32 Environmental Dashboard</h2>
 
-<h1>🌌 ESP32 Environmental Dashboard</h1>
-
-<div class="buttons">
-  <button onclick="showSection('live')">Live Data</button>
-  <button onclick="showSection('hourly')">Hourly Summary</button>
-  <button onclick="showSection('daily')">Daily Summary</button>
-</div>
-
-<!-- ===== LIVE ===== -->
-<div id="live-section">
-  <div class="cards">
-    <div class="card">🌡 Temperature<span id="temp">--</span></div>
-    <div class="card">💧 Humidity<span id="hum">--</span></div>
-    <div class="card">💡 Light (Lux)<span id="lux">--</span></div>
-    <div class="card">☀ UV (V)<span id="uv">--</span></div>
+  <div class="buttons">
+    <button onclick="showSection('live')">Live</button>
+    <button onclick="showSection('hourly')">Hourly Summary</button>
+    <button onclick="showSection('daily')">Daily Summary</button>
   </div>
-  <canvas id="liveChart"></canvas>
-</div>
 
-<!-- ===== HOURLY ===== -->
-<div id="hourly-section" style="display:none;">
-  <canvas id="hourlyChart"></canvas>
-</div>
+  <!-- ===== LIVE SECTION ===== -->
+  <div id="live-section">
+    <div class="cards">
+      <div class="card">🌡 Temp: <span id="temp">--</span> °C</div>
+      <div class="card">💧 Humidity: <span id="hum">--</span> %</div>
+      <div class="card">☀ UV: <span id="uv">--</span> V</div>
+    </div>
+    <canvas id="liveChart"></canvas>
+  </div>
 
-<!-- ===== DAILY ===== -->
-<div id="daily-section" style="display:none;">
-  <canvas id="dailyChart"></canvas>
-</div>
+  <!-- ===== HOURLY SECTION ===== -->
+  <div id="hourly-section" style="display:none;">
+    <canvas id="hourlyChart"></canvas>
+  </div>
 
-<footer>
-  © ESP32 Firebase Monitoring System
-</footer>
+  <!-- ===== DAILY SECTION ===== -->
+  <div id="daily-section" style="display:none;">
+    <canvas id="dailyChart"></canvas>
+  </div>
 
 <script>
-  /* ===== FIREBASE CONFIG ===== */
+  // ===== FIREBASE CONFIG =====
   const firebaseConfig = {
     apiKey: "AIzaSyC09rcYujM42cSkheYQSfzw5UCYy2LzeEY",
     databaseURL: "https://virtual-esp32-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
   };
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  /* ===== SECTION SWITCH ===== */
+  // ===== FETCH CALIBRATION =====
+  let tempOffset = 0;
+  let humOffset = 0;
+  db.ref("/calibration").once("value").then(snapshot => {
+    const calib = snapshot.val();
+    if(calib){
+      tempOffset = calib.temperature_offset || 0;
+      humOffset  = calib.humidity_offset || 0;
+    }
+  });
+
+  // ===== SECTION SWITCH =====
   function showSection(section) {
     document.getElementById('live-section').style.display = 'none';
     document.getElementById('hourly-section').style.display = 'none';
@@ -153,100 +154,114 @@
     document.getElementById(section + '-section').style.display = 'block';
   }
 
-  /* ===== LIVE CHART ===== */
+  // ===== LIVE DATA CHART =====
   const liveLabels = [];
-  const tempData = [], humData = [], luxData = [], uvData = [];
-
-  const liveChart = new Chart(document.getElementById('liveChart'), {
+  const tempData = [], humData = [], uvData = [];
+  const liveCtx = document.getElementById('liveChart').getContext('2d');
+  const liveChart = new Chart(liveCtx, {
     type: 'line',
     data: {
       labels: liveLabels,
       datasets: [
-        { label: 'Temp (°C)', data: tempData, borderColor: '#ff8a65' },
-        { label: 'Humidity (%)', data: humData, borderColor: '#64b5f6' },
-        { label: 'Light (lux)', data: luxData, borderColor: '#fff176' },
-        { label: 'UV (V)', data: uvData, borderColor: '#81c784' }
+        { label: 'Temp (°C)', data: tempData, borderColor: '#ff5722', fill: false, tension:0.3, pointBackgroundColor:'#ff9800', pointRadius:4, borderWidth:3 },
+        { label: 'Humidity (%)', data: humData, borderColor: '#2196f3', fill: false, tension:0.3, pointBackgroundColor:'#03a9f4', pointRadius:4, borderWidth:3 },
+        { label: 'UV (V)', data: uvData, borderColor: '#4caf50', fill: false, tension:0.3, pointBackgroundColor:'#8bc34a', pointRadius:4, borderWidth:3 }
       ]
     },
     options: {
       responsive: true,
+      plugins: { legend: { position: 'top', labels: { color: '#f0f0f0', font:{weight:'bold'} } } },
       animation: false,
-      scales: {
-        x: { ticks: { color: '#e5e7eb' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-        y: { ticks: { color: '#e5e7eb' }, grid: { color: 'rgba(255,255,255,0.1)' } }
-      },
-      plugins: { legend: { labels: { color: '#f1f5f9' } } }
+      scales: { 
+        x: { title: { display: true, text: 'Time', color: '#f0f0f0' }, ticks:{color:'#f0f0f0'} },
+        y: { ticks: { color:'#f0f0f0' } }
+      }
     }
   });
 
-  db.ref("/sensor").on("value", snap => {
-    const d = snap.val();
-    if (!d) return;
+  // ===== LIVE DATA UPDATE WITH CALIBRATION =====
+  db.ref("/sensor").on("value", snapshot => {
+    const data = snapshot.val();
+    if(data){
+      const now = new Date().toLocaleTimeString();
+      
+      const temp = (data.temperature || 0) + tempOffset;
+      const hum  = (data.humidity || 0) + humOffset;
+      const uv   = data.uv || 0;
 
-    document.getElementById("temp").innerText = d.temperature.toFixed(1);
-    document.getElementById("hum").innerText  = d.humidity.toFixed(1);
-    document.getElementById("lux").innerText  = d.light.toFixed(1);
-    document.getElementById("uv").innerText   = d.uv.toFixed(2);
+      document.getElementById("temp").innerText = temp.toFixed(1);
+      document.getElementById("hum").innerText  = hum.toFixed(1);
+      document.getElementById("uv").innerText   = uv.toFixed(2);
 
-    const t = new Date().toLocaleTimeString();
-    if (liveLabels.length > 20) {
-      liveLabels.shift(); tempData.shift(); humData.shift(); luxData.shift(); uvData.shift();
+      if(liveLabels.length > 20){ 
+        liveLabels.shift(); tempData.shift(); humData.shift(); uvData.shift();
+      }
+      liveLabels.push(now);
+      tempData.push(temp);
+      humData.push(hum);
+      uvData.push(uv);
+      liveChart.update();
     }
-
-    liveLabels.push(t);
-    tempData.push(d.temperature);
-    humData.push(d.humidity);
-    luxData.push(d.light);
-    uvData.push(d.uv);
-    liveChart.update();
   });
 
-  /* ===== HOURLY ===== */
-  const hourlyChart = new Chart(document.getElementById('hourlyChart'), {
+  // ===== HOURLY SUMMARY WITH CALIBRATION =====
+  const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+  const hourlyChart = new Chart(hourlyCtx, {
     type: 'bar',
     data: { labels: [], datasets: [
-      { label: 'Temp', data: [], backgroundColor: '#ff8a65' },
-      { label: 'Humidity', data: [], backgroundColor: '#64b5f6' },
-      { label: 'Light', data: [], backgroundColor: '#fff176' },
-      { label: 'UV', data: [], backgroundColor: '#81c784' }
+      { label: 'Avg Temp (°C)', data: [], backgroundColor: '#ff5722' },
+      { label: 'Avg Humidity (%)', data: [], backgroundColor: '#2196f3' },
+      { label: 'Avg UV (V)', data: [], backgroundColor: '#4caf50' }
     ]},
-    options: { plugins:{ legend:{ labels:{ color:'#f1f5f9' }}}}
+    options: { responsive:true, plugins:{legend:{position:'top', labels:{color:'#f0f0f0'}}}, scales:{x:{ticks:{color:'#f0f0f0'}},y:{ticks:{color:'#f0f0f0'}}} }
   });
 
-  db.ref("/sensor_history").on("value", snap=>{
-    const d = snap.val();
-    if(!d) return;
-    hourlyChart.data.labels = Object.keys(d);
-    hourlyChart.data.datasets[0].data = Object.values(d).map(v=>v.avg_temperature);
-    hourlyChart.data.datasets[1].data = Object.values(d).map(v=>v.avg_humidity);
-    hourlyChart.data.datasets[2].data = Object.values(d).map(v=>v.avg_light);
-    hourlyChart.data.datasets[3].data = Object.values(d).map(v=>v.avg_uv);
+  db.ref("/sensor_history").on("value", snapshot=>{
+    const data = snapshot.val();
+    if(!data) return;
+    const labels = [], temp=[], hum=[], uv=[];
+    Object.keys(data).forEach(hour=>{
+      labels.push(hour);
+      temp.push((data[hour].avg_temperature || 0) + tempOffset);
+      hum.push((data[hour].avg_humidity || 0) + humOffset);
+      uv.push(data[hour].avg_uv || 0);
+    });
+    hourlyChart.data.labels = labels;
+    hourlyChart.data.datasets[0].data = temp;
+    hourlyChart.data.datasets[1].data = hum;
+    hourlyChart.data.datasets[2].data = uv;
     hourlyChart.update();
   });
 
-  /* ===== DAILY ===== */
-  const dailyChart = new Chart(document.getElementById('dailyChart'), {
+  // ===== DAILY SUMMARY WITH CALIBRATION =====
+  const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+  const dailyChart = new Chart(dailyCtx, {
     type: 'bar',
     data: { labels: [], datasets: [
-      { label: 'Temp', data: [], backgroundColor: '#ff8a65' },
-      { label: 'Humidity', data: [], backgroundColor: '#64b5f6' },
-      { label: 'Light', data: [], backgroundColor: '#fff176' },
-      { label: 'UV', data: [], backgroundColor: '#81c784' }
+      { label: 'Avg Temp (°C)', data: [], backgroundColor: '#ff5722' },
+      { label: 'Avg Humidity (%)', data: [], backgroundColor: '#2196f3' },
+      { label: 'Avg UV (V)', data: [], backgroundColor: '#4caf50' }
     ]},
-    options: { plugins:{ legend:{ labels:{ color:'#f1f5f9' }}}}
+    options: { responsive:true, plugins:{legend:{position:'top', labels:{color:'#f0f0f0'}}}, scales:{x:{ticks:{color:'#f0f0f0'}},y:{ticks:{color:'#f0f0f0'}}} }
   });
 
-  db.ref("/daily_summary").on("value", snap=>{
-    const d = snap.val();
-    if(!d) return;
-    dailyChart.data.labels = Object.keys(d);
-    dailyChart.data.datasets[0].data = Object.values(d).map(v=>v.avg_temperature);
-    dailyChart.data.datasets[1].data = Object.values(d).map(v=>v.avg_humidity);
-    dailyChart.data.datasets[2].data = Object.values(d).map(v=>v.avg_light);
-    dailyChart.data.datasets[3].data = Object.values(d).map(v=>v.avg_uv);
+  db.ref("/daily_summary").on("value", snapshot=>{
+    const data = snapshot.val();
+    if(!data) return;
+    const labels = [], temp=[], hum=[], uv=[];
+    Object.keys(data).forEach(day=>{
+      labels.push(day);
+      temp.push((data[day].avg_temperature || 0) + tempOffset);
+      hum.push((data[day].avg_humidity || 0) + humOffset);
+      uv.push(data[day].avg_uv || 0);
+    });
+    dailyChart.data.labels = labels;
+    dailyChart.data.datasets[0].data = temp;
+    dailyChart.data.datasets[1].data = hum;
+    dailyChart.data.datasets[2].data = uv;
     dailyChart.update();
   });
-</script>
 
+</script>
 </body>
 </html>
