@@ -12,88 +12,131 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    body {
+    /* ===== GLOBAL ===== */
+    * {
+      box-sizing: border-box;
       font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f0f4f8;
+    }
+
+    body {
       margin: 0;
       padding: 20px;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #f1f5f9;
     }
+
     h1 {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+      font-weight: 600;
     }
+
+    /* ===== BUTTONS ===== */
     .buttons {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
+
     .buttons button {
       padding: 10px 20px;
-      margin: 0 10px;
-      font-size: 16px;
-      border-radius: 8px;
+      margin: 5px;
+      font-size: 15px;
+      border-radius: 12px;
       border: none;
       cursor: pointer;
-      background-color: #1976d2;
-      color: white;
-      transition: 0.2s;
+      background: rgba(255, 255, 255, 0.15);
+      color: #f8fafc;
+      backdrop-filter: blur(8px);
+      transition: 0.3s ease;
     }
-    .buttons button:hover { background-color: #1565c0; }
+
+    .buttons button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ===== CARDS ===== */
     .cards {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 15px;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
     }
+
     .card {
-      background: white;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-      width: 180px;
+      border-radius: 16px;
+      width: 190px;
       text-align: center;
-      font-size: 18px;
+      font-size: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     }
+
+    .card span {
+      display: block;
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* ===== CANVAS ===== */
     canvas {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-      max-width: 90%;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 15px;
+      max-width: 95%;
       margin: 0 auto 30px auto;
       display: block;
     }
+
+    footer {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
+
 <body>
-  <h1>ESP32 Environmental Dashboard</h1>
 
-  <div class="buttons">
-    <button onclick="showSection('live')">Live</button>
-    <button onclick="showSection('hourly')">Hourly Summary</button>
-    <button onclick="showSection('daily')">Daily Summary</button>
-  </div>
+<h1>🌌 ESP32 Environmental Dashboard</h1>
 
-  <div id="live-section">
-    <div class="cards">
-      <div class="card">🌡 Temp: <span id="temp">--</span> °C</div>
-      <div class="card">💧 Humidity: <span id="hum">--</span> %</div>
-      <div class="card">💡 Light: <span id="lux">--</span> lux</div>
-      <div class="card">☀ UV: <span id="uv">--</span> V</div>
-    </div>
-    <canvas id="liveChart"></canvas>
-  </div>
+<div class="buttons">
+  <button onclick="showSection('live')">Live Data</button>
+  <button onclick="showSection('hourly')">Hourly Summary</button>
+  <button onclick="showSection('daily')">Daily Summary</button>
+</div>
 
-  <div id="hourly-section" style="display:none;">
-    <canvas id="hourlyChart"></canvas>
+<!-- ===== LIVE ===== -->
+<div id="live-section">
+  <div class="cards">
+    <div class="card">🌡 Temperature<span id="temp">--</span></div>
+    <div class="card">💧 Humidity<span id="hum">--</span></div>
+    <div class="card">💡 Light (Lux)<span id="lux">--</span></div>
+    <div class="card">☀ UV (V)<span id="uv">--</span></div>
   </div>
+  <canvas id="liveChart"></canvas>
+</div>
 
-  <div id="daily-section" style="display:none;">
-    <canvas id="dailyChart"></canvas>
-  </div>
+<!-- ===== HOURLY ===== -->
+<div id="hourly-section" style="display:none;">
+  <canvas id="hourlyChart"></canvas>
+</div>
+
+<!-- ===== DAILY ===== -->
+<div id="daily-section" style="display:none;">
+  <canvas id="dailyChart"></canvas>
+</div>
+
+<footer>
+  © ESP32 Firebase Monitoring System
+</footer>
 
 <script>
-  // ===== FIREBASE CONFIG =====
+  /* ===== FIREBASE CONFIG ===== */
   const firebaseConfig = {
     apiKey: "AIzaSyC09rcYujM42cSkheYQSfzw5UCYy2LzeEY",
     databaseURL: "https://virtual-esp32-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
@@ -102,7 +145,7 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // ===== SECTION SWITCH =====
+  /* ===== SECTION SWITCH ===== */
   function showSection(section) {
     document.getElementById('live-section').style.display = 'none';
     document.getElementById('hourly-section').style.display = 'none';
@@ -110,114 +153,100 @@
     document.getElementById(section + '-section').style.display = 'block';
   }
 
-  // ===== LIVE DATA CHART =====
+  /* ===== LIVE CHART ===== */
   const liveLabels = [];
   const tempData = [], humData = [], luxData = [], uvData = [];
-  const liveCtx = document.getElementById('liveChart').getContext('2d');
-  const liveChart = new Chart(liveCtx, {
+
+  const liveChart = new Chart(document.getElementById('liveChart'), {
     type: 'line',
     data: {
       labels: liveLabels,
       datasets: [
-        { label: 'Temp (°C)', data: tempData, borderColor: '#ff5722', fill: false },
-        { label: 'Humidity (%)', data: humData, borderColor: '#2196f3', fill: false },
-        { label: 'Light (lux)', data: luxData, borderColor: '#ffeb3b', fill: false },
-        { label: 'UV (V)', data: uvData, borderColor: '#4caf50', fill: false }
+        { label: 'Temp (°C)', data: tempData, borderColor: '#ff8a65' },
+        { label: 'Humidity (%)', data: humData, borderColor: '#64b5f6' },
+        { label: 'Light (lux)', data: luxData, borderColor: '#fff176' },
+        { label: 'UV (V)', data: uvData, borderColor: '#81c784' }
       ]
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: 'top' } },
       animation: false,
-      scales: { x: { title: { display: true, text: 'Time' } } }
+      scales: {
+        x: { ticks: { color: '#e5e7eb' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+        y: { ticks: { color: '#e5e7eb' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#f1f5f9' } } }
     }
   });
 
-  db.ref("/sensor").on("value", snapshot => {
-    const data = snapshot.val();
-    if(data){
-      const now = new Date().toLocaleTimeString();
-      document.getElementById("temp").innerText = data.temperature.toFixed(1);
-      document.getElementById("hum").innerText  = data.humidity.toFixed(1);
-      document.getElementById("lux").innerText  = data.light.toFixed(1);
-      document.getElementById("uv").innerText   = data.uv.toFixed(2);
+  db.ref("/sensor").on("value", snap => {
+    const d = snap.val();
+    if (!d) return;
 
-      if(liveLabels.length > 20){ // keep last 20 points
-        liveLabels.shift(); tempData.shift(); humData.shift(); luxData.shift(); uvData.shift();
-      }
-      liveLabels.push(now);
-      tempData.push(data.temperature);
-      humData.push(data.humidity);
-      luxData.push(data.light);
-      uvData.push(data.uv);
-      liveChart.update();
+    document.getElementById("temp").innerText = d.temperature.toFixed(1);
+    document.getElementById("hum").innerText  = d.humidity.toFixed(1);
+    document.getElementById("lux").innerText  = d.light.toFixed(1);
+    document.getElementById("uv").innerText   = d.uv.toFixed(2);
+
+    const t = new Date().toLocaleTimeString();
+    if (liveLabels.length > 20) {
+      liveLabels.shift(); tempData.shift(); humData.shift(); luxData.shift(); uvData.shift();
     }
+
+    liveLabels.push(t);
+    tempData.push(d.temperature);
+    humData.push(d.humidity);
+    luxData.push(d.light);
+    uvData.push(d.uv);
+    liveChart.update();
   });
 
-  // ===== HOURLY SUMMARY CHART =====
-  const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
-  const hourlyChart = new Chart(hourlyCtx, {
+  /* ===== HOURLY ===== */
+  const hourlyChart = new Chart(document.getElementById('hourlyChart'), {
     type: 'bar',
     data: { labels: [], datasets: [
-      { label: 'Avg Temp (°C)', data: [], backgroundColor: '#ff5722' },
-      { label: 'Avg Humidity (%)', data: [], backgroundColor: '#2196f3' },
-      { label: 'Avg Light (lux)', data: [], backgroundColor: '#ffeb3b' },
-      { label: 'Avg UV (V)', data: [], backgroundColor: '#4caf50' }
+      { label: 'Temp', data: [], backgroundColor: '#ff8a65' },
+      { label: 'Humidity', data: [], backgroundColor: '#64b5f6' },
+      { label: 'Light', data: [], backgroundColor: '#fff176' },
+      { label: 'UV', data: [], backgroundColor: '#81c784' }
     ]},
-    options: { responsive:true, plugins:{legend:{position:'top'}} }
+    options: { plugins:{ legend:{ labels:{ color:'#f1f5f9' }}}}
   });
 
-  db.ref("/sensor_history").on("value", snapshot=>{
-    const data = snapshot.val();
-    if(!data) return;
-    const labels = [], temp=[], hum=[], lux=[], uv=[];
-    Object.keys(data).forEach(hour=>{
-      labels.push(hour);
-      temp.push(data[hour].avg_temperature);
-      hum.push(data[hour].avg_humidity);
-      lux.push(data[hour].avg_light);
-      uv.push(data[hour].avg_uv);
-    });
-    hourlyChart.data.labels = labels;
-    hourlyChart.data.datasets[0].data = temp;
-    hourlyChart.data.datasets[1].data = hum;
-    hourlyChart.data.datasets[2].data = lux;
-    hourlyChart.data.datasets[3].data = uv;
+  db.ref("/sensor_history").on("value", snap=>{
+    const d = snap.val();
+    if(!d) return;
+    hourlyChart.data.labels = Object.keys(d);
+    hourlyChart.data.datasets[0].data = Object.values(d).map(v=>v.avg_temperature);
+    hourlyChart.data.datasets[1].data = Object.values(d).map(v=>v.avg_humidity);
+    hourlyChart.data.datasets[2].data = Object.values(d).map(v=>v.avg_light);
+    hourlyChart.data.datasets[3].data = Object.values(d).map(v=>v.avg_uv);
     hourlyChart.update();
   });
 
-  // ===== DAILY SUMMARY CHART =====
-  const dailyCtx = document.getElementById('dailyChart').getContext('2d');
-  const dailyChart = new Chart(dailyCtx, {
+  /* ===== DAILY ===== */
+  const dailyChart = new Chart(document.getElementById('dailyChart'), {
     type: 'bar',
     data: { labels: [], datasets: [
-      { label: 'Avg Temp (°C)', data: [], backgroundColor: '#ff5722' },
-      { label: 'Avg Humidity (%)', data: [], backgroundColor: '#2196f3' },
-      { label: 'Avg Light (lux)', data: [], backgroundColor: '#ffeb3b' },
-      { label: 'Avg UV (V)', data: [], backgroundColor: '#4caf50' }
+      { label: 'Temp', data: [], backgroundColor: '#ff8a65' },
+      { label: 'Humidity', data: [], backgroundColor: '#64b5f6' },
+      { label: 'Light', data: [], backgroundColor: '#fff176' },
+      { label: 'UV', data: [], backgroundColor: '#81c784' }
     ]},
-    options: { responsive:true, plugins:{legend:{position:'top'}} }
+    options: { plugins:{ legend:{ labels:{ color:'#f1f5f9' }}}}
   });
 
-  db.ref("/daily_summary").on("value", snapshot=>{
-    const data = snapshot.val();
-    if(!data) return;
-    const labels = [], temp=[], hum=[], lux=[], uv=[];
-    Object.keys(data).forEach(day=>{
-      labels.push(day);
-      temp.push(data[day].avg_temperature);
-      hum.push(data[day].avg_humidity);
-      lux.push(data[day].avg_light);
-      uv.push(data[day].avg_uv);
-    });
-    dailyChart.data.labels = labels;
-    dailyChart.data.datasets[0].data = temp;
-    dailyChart.data.datasets[1].data = hum;
-    dailyChart.data.datasets[2].data = lux;
-    dailyChart.data.datasets[3].data = uv;
+  db.ref("/daily_summary").on("value", snap=>{
+    const d = snap.val();
+    if(!d) return;
+    dailyChart.data.labels = Object.keys(d);
+    dailyChart.data.datasets[0].data = Object.values(d).map(v=>v.avg_temperature);
+    dailyChart.data.datasets[1].data = Object.values(d).map(v=>v.avg_humidity);
+    dailyChart.data.datasets[2].data = Object.values(d).map(v=>v.avg_light);
+    dailyChart.data.datasets[3].data = Object.values(d).map(v=>v.avg_uv);
     dailyChart.update();
   });
-
 </script>
+
 </body>
 </html>
